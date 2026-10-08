@@ -1,24 +1,30 @@
-  const express = require("express");
-  const cors = require("cors");
-  const artisanRoutes = require("./routes/artisanRoutes");
-  const artisanServiceRoutes = require("./routes/artisanServiceRoutes");
+const express = require("express");
+const cors = require("cors");
 
-  const authRoutes = require("./routes/authRoutes");
-  
+// Import all your routes cleanly at the top
+const authRoutes = require("./routes/authRoutes");
+const artisanRoutes = require("./routes/artisanRoutes");
+const artisanServiceRoutes = require("./routes/artisanServiceRoutes");
+const customerRoutes = require("./routes/customerRoutes");
+const customRequestRoutes = require("./routes/customRequestRoutes"); // <--- Added here
 
-  const app = express();
+const app = express();
 
-  app.use(cors());
-  app.use(express.json());
+app.use(cors());
+app.use(express.json());
 
-  app.get("/api/health", (req, res) => {
-    res.json({
-      success: true,
-      message: "Stitchly API is running!",
-    });
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "Stitchly API is running!",
   });
+});
 
-  app.use("/api/auth", authRoutes);
-  app.use("/api/artisans", artisanRoutes);
-  app.use("/api/artisans/services", artisanServiceRoutes);
-  module.exports = app;
+// Hook up your route middleware
+app.use("/api/auth", authRoutes);
+app.use("/api/artisans", artisanRoutes);
+app.use("/api/artisans/services", artisanServiceRoutes);
+app.use("/api/customers", customerRoutes);
+app.use("/api/custom-requests", customRequestRoutes); // <--- Mounted here
+
+module.exports = app;

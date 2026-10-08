@@ -6,13 +6,15 @@ const {
   updateService,
   deleteService,
   updateServiceAvailability,
+  getAllActiveServices,
+  getServiceById,
 } = require("../controllers/artisanServiceController");
 
 const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
-
+router.get("/",getAllActiveServices);
 
 
 // Create artisan service
@@ -30,6 +32,9 @@ router.get(
   authorizeRoles("artisan"),
   getMyServices
 );
+
+router.get("/:serviceId", getServiceById);
+
 
 // Update artisan service availability
 router.patch(

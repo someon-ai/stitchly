@@ -270,10 +270,126 @@ const updateServiceAvailability = async (req, res) => {
   }
 };
 
+const getAllActiveServices = async (req, res) => {
+  try {
+    const {
+      category,
+      minPrice,
+      maxPrice,
+      search,
+    } = req.query;
+
+    const filter = {
+      isActive: true,
+    };
+
+    // Filter by category
+    if (category) {
+      filter.category = category;
+    }
+
+    // Filter by minimum price
+    if (minPrice !== undefined) {
+      filter.price = {
+        ...filter.price,
+        $gte: Number(minPrice),
+      };
+    }
+
+    // Filter by maximum price
+    if (maxPrice !== undefined) {
+      filter.price = {
+        ...filter.price,
+        $lte: Number(maxPrice),
+      };
+    }
+
+    // Search by service title or description
+    if (search) {
+      filter.$or = [
+        {
+          title: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    const services = await ArtisanService.find(filter).populate({
+      path: "artisan",
+      select:
+        "businessName bio location experience specialties profileImage isVerified",
+    });
+
+    res.status(200).json({
+      success: true,
+      count: services.length,
+      filters: {
+        category: category || null,
+        minPrice: minPrice || null,
+        maxPrice: maxPrice || null,
+        search: search || null,
+      },
+      services,
+    });
+  } catch (error) {
+    console.error("Get filtered services error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+const getServiceById = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+
+    const service = await ArtisanService.findOne({
+      _id: serviceId,
+      isActive: true,
+    }).populate({
+      path: "artisan",
+      select:
+        "businessName bio location experience specialties profileImage isVerified",
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        message: "Service not found or is currently unavailable",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      service,
+    });
+  } catch (error) {
+    console.error("Get service by ID error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
 module.exports = {
   createService,
   getMyServices,
   updateService,
   deleteService,
   updateServiceAvailability,
+  getAllActiveServices,
+  getServiceById,
 };
