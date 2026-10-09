@@ -1,8 +1,8 @@
 const express = require("express");
-
 const {
   createCustomRequest,
-  getArtisanRequests,
+  getOpenCustomRequests,
+  getMyCustomRequests,
 } = require("../controllers/customRequestController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -10,8 +10,7 @@ const { authorizeRoles } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-
-// Customer creates custom request
+// Customers create custom requests
 router.post(
   "/",
   protect,
@@ -19,12 +18,21 @@ router.post(
   createCustomRequest
 );
 
-// Artisan views incoming requests
+// Artisans browse all open requests
 router.get(
-  "/artisan",
+  "/open",
   protect,
   authorizeRoles("artisan"),
-  getArtisanRequests
+  getOpenCustomRequests
+);
+
+// Customers view their own requests
+router.get(
+  "/my",
+  protect,
+  authorizeRoles("customer"),
+  getMyCustomRequests
 );
 
 module.exports = router;
+

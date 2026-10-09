@@ -1,5 +1,5 @@
+const mongoose = require("mongoose");
 const ArtisanProfile = require("../models/artisanProfile");
-
 // Create artisan profile
 const createArtisanProfile = async (req, res) => {
   try {
@@ -161,6 +161,13 @@ const getAllArtisans = async (req, res) => {
 const getArtisanById = async (req, res) => {
   try {
     const { artisanId } = req.params;
+
+    if (!mongoose.isValidObjectId(artisanId)) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid artisan ID",
+  });
+}
 
     const artisan = await ArtisanProfile.findById(artisanId)
       .populate("user", "name email role");

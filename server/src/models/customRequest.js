@@ -2,28 +2,19 @@ const mongoose = require("mongoose");
 
 const customRequestSchema = new mongoose.Schema(
   {
+    // Customer who created the request
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    artisan: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ArtisanProfile",
-      required: true,
-    },
-
-    service: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ArtisanService",
-      required: true,
-    },
-
+    // Basic request information
     title: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 100,
     },
 
     description: {
@@ -33,9 +24,30 @@ const customRequestSchema = new mongoose.Schema(
       maxlength: 2000,
     },
 
-    referenceImages: {
-      type: [String],
-      default: [],
+    category: {
+      type: String,
+      required: true,
+      enum: [
+        "Traditional Embroidery",
+        "Hand Embroidery",
+        "Machine Embroidery",
+        "Bridal Embroidery",
+        "Custom Embroidery",
+        "Embroidery Designs",
+      ],
+    },
+
+    // Customer's requirements
+    fabric: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
     },
 
     requestedDeliveryTime: {
@@ -44,20 +56,33 @@ const customRequestSchema = new mongoose.Schema(
       min: 1,
     },
 
-    budget: {
+    budgetMin: {
       type: Number,
       min: 0,
+      default: null,
     },
 
+    budgetMax: {
+      type: Number,
+      min: 0,
+      default: null,
+    },
+
+    referenceImages: {
+      type: [String],
+      default: [],
+    },
+
+    // Request lifecycle
     status: {
       type: String,
       enum: [
         "pending",
         "quoted",
         "accepted",
-        "rejected",
-        "cancelled",
+        "in_progress",
         "completed",
+        "cancelled",
       ],
       default: "pending",
     },
@@ -71,3 +96,4 @@ module.exports = mongoose.model(
   "CustomRequest",
   customRequestSchema
 );
+
