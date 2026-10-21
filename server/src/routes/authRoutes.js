@@ -5,6 +5,7 @@
     registerUser,
     loginUser,
     getMe,
+    setupAdmin
   } = require("../controllers/authController");
 
   const { protect } = require("../middleware/authMiddleware");
@@ -19,6 +20,8 @@
 
   router.get("/me", protect, getMe);
 
+  router.post("/setup-admin", setupAdmin);
+
   router.get(
     "/admin-test",
     protect,
@@ -31,4 +34,5 @@
     }
   );
 
+  
   module.exports = router;

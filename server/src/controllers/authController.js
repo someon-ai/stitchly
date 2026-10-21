@@ -71,6 +71,91 @@ const registerUser = async (req, res) => {
 };
 
 
+const setupAdmin = async (req, res) => {
+  try {
+    const setupSecret = req.get("x-admin-setup-secret");
+
+    if (!process.env.ADMIN_SETUP_SECRET) {
+      return res.status(503).json({
+        success: false,
+        message: "Admin setup is not configured.",
+      });
+    }
+
+    if (setupSecret !== process.env.ADMIN_SETUP_SECRET) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid admin setup secret.",
+      });
+    }
+
+    const existingAdmin = await User.findOne({ role: "admin" });
+
+    if (existingAdmin) {
+      return res.status(409).json({
+        success: false,
+        message: "An admin account already exists.",
+      });
+    }
+
+    const { name, email, password } = req.body;
+
+    if (
+      typeof name !== "string" ||
+      !name.trim() ||
+      typeof email !== "string" ||
+      !email.trim() ||
+      typeof password !== "string" ||
+      password.length < 6
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid name, email and password of at least 6 characters are required.",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const admin = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password: hashedPassword,
+      role: "admin",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Admin account created. Log in to obtain your token.",
+      user: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
+    });
+  } catch (error) {
+    console.error("Admin setup error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while setting up admin.",
+    });
+  }
+};
+
 // ===============================
 // LOGIN
 // ===============================
@@ -177,5 +262,5 @@ module.exports = {
   registerUser,
   loginUser,
   getMe,
-
+  setupAdmin
 };

@@ -28,3 +28,9 @@ yarn-error.log*
 
 # Dependencies
 **/node_modules/
+
+# Private environment files
+server/src/.env
+
+# Private uploads and payment proofs
+server/private_uploads/

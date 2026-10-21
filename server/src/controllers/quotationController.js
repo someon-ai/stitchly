@@ -1,6 +1,7 @@
 const Quotation = require("../models/quotation");
 const CustomRequest = require("../models/customRequest");
 const ArtisanProfile = require("../models/artisanProfile");
+const Notification = require("../models/notification");
 
 // Artisan sends a quotation for a custom request
 const createQuotation = async (req, res) => {
@@ -84,7 +85,17 @@ const quotation = await Quotation.create({
   deliveryTime,
   message,
 });
-
+try {
+  await Notification.create({
+    recipient: customRequest.customer,
+    type: "quotation_received",
+    title: "New quotation received",
+    message: "An artisan has submitted a quotation for your custom embroidery request.",
+    relatedId: quotation._id,
+  });
+} catch (notificationError) {
+  console.error("Quotation notification failed:", notificationError);
+}
 return res.status(201).json({
   success: true,
   message: "Quotation submitted successfully.",
@@ -170,6 +181,7 @@ const customRequest = await CustomRequest.findById(
   quotation.customRequest
 );
 
+
 if (!customRequest) {
   return res.status(404).json({
     success: false,
@@ -226,6 +238,22 @@ if (action === "accept") {
 
 await quotation.save();
 
+if (action === "accept") {
+  try {
+    await Notification.create({
+      recipient: (
+        await ArtisanProfile.findById(quotation.artisan).select("user")
+      )?.user,
+      type: "quotation_accepted",
+      title: "Quotation accepted",
+      message: "A customer has accepted your quotation. You can now prepare for the order.",
+      relatedId: quotation._id,
+    });
+  } catch (notificationError) {
+    console.error("Quotation acceptance notification failed:", notificationError);
+  }
+}
+
 return res.status(200).json({
   success: true,
   message:
@@ -234,7 +262,6 @@ return res.status(200).json({
       : "Quotation rejected successfully.",
   quotation,
 });
-
 
 } catch (error) {
 console.error("Respond to quotation error:", error);
