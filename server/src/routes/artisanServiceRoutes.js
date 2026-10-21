@@ -14,10 +14,11 @@ const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
-router.get("/",getAllActiveServices);
 
+// Get all active services (public)
+router.get("/", getAllActiveServices);
 
-// Create artisan service
+// Create an artisan service
 router.post(
   "/",
   protect,
@@ -25,7 +26,7 @@ router.post(
   createService
 );
 
-// Get my artisan services
+// Get services belonging to the logged-in artisan
 router.get(
   "/my",
   protect,
@@ -33,19 +34,18 @@ router.get(
   getMyServices
 );
 
+// Get one active service by ID (public)
 router.get("/:serviceId", getServiceById);
-
 
 // Update artisan service availability
 router.patch(
-    
   "/:serviceId/availability",
   protect,
   authorizeRoles("artisan"),
   updateServiceAvailability
-)
+);
 
-// Update artisan service
+// Update an artisan service
 router.patch(
   "/:serviceId",
   protect,
@@ -53,12 +53,12 @@ router.patch(
   updateService
 );
 
+// Delete an artisan service
 router.delete(
   "/:serviceId",
   protect,
   authorizeRoles("artisan"),
-  deleteService,
-  updateServiceAvailability
+  deleteService
 );
 
 module.exports = router;

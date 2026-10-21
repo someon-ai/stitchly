@@ -77,6 +77,18 @@ const createCustomRequest = async (req, res) => {
       referenceImages,
     });
 
+    try {
+  await Notification.create({
+    recipient: req.user.userId,
+    type: "custom_request_updated",
+    title: "Custom request submitted",
+    message: "Your custom embroidery request has been submitted successfully.",
+    relatedId: customRequest._id,
+  });
+} catch (notificationError) {
+  console.error("Custom request notification failed:", notificationError);
+}
+
     return res.status(201).json({
       success: true,
       message: "Custom embroidery request created successfully",

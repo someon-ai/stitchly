@@ -6,6 +6,7 @@ const {
   getPendingPayments,
   reviewPayment,
   getMyPayments,
+  
 } = require("../controllers/paymentController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -42,6 +43,13 @@ router.get(
   protect,
   authorizeRoles("customer"),
   getMyPayments
+);
+
+router.get(
+  "/payments",
+  protect,
+  authorizeRoles("admin"),
+  
 );
 
 module.exports = router;

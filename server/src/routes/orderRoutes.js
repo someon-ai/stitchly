@@ -5,6 +5,7 @@ createOrderFromQuotation,
 getMyOrders,
 getMyArtisanOrders,
 updateOrderStatus,
+getAllOrdersAdmin
 } = require("../controllers/orderController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -38,6 +39,14 @@ router.patch(
   protect,
   authorizeRoles("artisan"),
   updateOrderStatus
+);
+
+// Admin: Get all marketplace orders
+router.get(
+  "/admin/all",
+  protect,
+  authorizeRoles("admin"),
+  getAllOrdersAdmin
 );
 
 module.exports = router;

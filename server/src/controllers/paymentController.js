@@ -1,6 +1,6 @@
-
 const Payment = require("../models/payment");
 const Order = require("../models/order");
+const mongoose = require("mongoose");
 
 const submitPayment = async (req, res) => {
   try {
@@ -97,9 +97,6 @@ if (
   }
 };
 
-
-const mongoose = require("mongoose");
-
 const getPendingPayments = async (req, res) => {
   try {
     const payments = await Payment.find({ status: "pending" })
@@ -120,6 +117,32 @@ const getPendingPayments = async (req, res) => {
     });
   }
 };
+
+
+const getAllPaymentsAdmin = async (req, res) => {
+  try {
+    const payments = await Payment.find()
+      .populate("customer", "name email")
+      .populate("order", "agreedPrice status")
+      .populate("verifiedBy", "name email")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: payments.length,
+      payments,
+    });
+  } catch (error) {
+    console.error("Admin get all payments error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching all payments.",
+    });
+  }
+};
+
+
 
 const reviewPayment = async (req, res) => {
   try {
@@ -214,5 +237,6 @@ module.exports = {
   submitPayment,
     getPendingPayments,
     reviewPayment,
-    getMyPayments
+    getMyPayments,
+    getAllPaymentsAdmin
 };

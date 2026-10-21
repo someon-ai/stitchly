@@ -6,6 +6,8 @@ const {
   updateArtisanProfile,
   getAllArtisans,
   getArtisanById,
+  updateArtisanVerification,
+  verifyArtisan
 } = require("../controllers/artisanController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -42,5 +44,21 @@ router.patch(
 
 // Get a specific artisan by ID
 router.get("/profile/:artisanId", getArtisanById);
+
+// Admin verifies or unverifies an artisan
+router.patch(
+  "/:artisanId/verification",
+  protect,
+  authorizeRoles("admin"),
+  updateArtisanVerification
+);
+
+// Admin verifies an artisan
+router.patch(
+  "/:artisanId/verify",
+  protect,
+  authorizeRoles("admin"),
+  verifyArtisan
+);
 
 module.exports = router;

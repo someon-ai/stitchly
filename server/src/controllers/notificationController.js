@@ -4,14 +4,24 @@ const Notification = require("../models/notification");
 
 const getMyNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({
-      recipient: req.user.userId,
-    }).sort({ createdAt: -1 }).limit(50);
+    const [notifications, unreadCount] = await Promise.all([
+  Notification.find({
+    recipient: req.user.userId,
+  })
+    .sort({ createdAt: -1 })
+    .limit(50),
+
+  Notification.countDocuments({
+    recipient: req.user.userId,
+    isRead: false,
+  }),
+]);
 
     return res.status(200).json({
       success: true,
       count: notifications.length,
       notifications,
+      unreadCount
     });
   } catch (error) {
     console.error("Fetching notifications failed:", error);

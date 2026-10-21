@@ -1,6 +1,8 @@
-const jwt = require("jsonwebtoken");
 
-const protect = (req, res, next) => {
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
+
+const protect = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -18,7 +20,28 @@ const protect = (req, res, next) => {
       process.env.JWT_SECRET
     );
 
-    req.user = decoded;
+    const user = await User.findById(decoded.userId).select(
+      "_id role isActive"
+    );
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized. User account not found.",
+      });
+    }
+
+    if (user.isActive === false) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been deactivated.",
+      });
+    }
+
+    req.user = {
+      userId: user._id,
+      role: user.role,
+    };
 
     next();
   } catch (error) {

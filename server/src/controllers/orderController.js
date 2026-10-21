@@ -236,9 +236,35 @@ const updateOrderStatus = async (req, res) => {
 };
 
 
+const getAllOrdersAdmin = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate("customer", "name email")
+      .populate("artisan", "businessName location")
+      .populate("customRequest", "title description category quantity")
+      .populate("quotation", "price deliveryTime message status")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: orders.length,
+      orders,
+    });
+  } catch (error) {
+    console.error("Admin get all orders error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching all orders.",
+    });
+  }
+};
+
+
 module.exports = {
 createOrderFromQuotation,
 getMyOrders,
 getMyArtisanOrders,
 updateOrderStatus,
+getAllOrdersAdmin
 };

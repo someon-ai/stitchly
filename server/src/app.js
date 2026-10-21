@@ -15,7 +15,7 @@ const digitalProductRoutes = require("./routes/digitalProductRoutes");
 const digitalPurchaseRoutes = require("./routes/digitalPurchaseRoutes");
 const digitalPurchaseAdminRoutes = require("./routes/digitalPurchaseAdminRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -46,6 +46,7 @@ app.use(
   digitalPurchaseAdminRoutes
 );
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin", adminRoutes);
 
 
 

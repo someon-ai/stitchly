@@ -193,6 +193,98 @@ const getArtisanById = async (req, res) => {
   }
 };
 
+// Admin verifies an artisan profile
+const verifyArtisan = async (req, res) => {
+  try {
+    const { artisanId } = req.params;
+
+    if (!mongoose.isValidObjectId(artisanId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid artisan ID",
+      });
+    }
+
+    const artisan = await ArtisanProfile.findById(artisanId);
+
+    if (!artisan) {
+      return res.status(404).json({
+        success: false,
+        message: "Artisan not found",
+      });
+    }
+
+    artisan.isVerified = true;
+    await artisan.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Artisan verified successfully",
+      artisan,
+    });
+  } catch (error) {
+    console.error("Verify artisan error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+const updateArtisanVerification = async (req, res) => {
+  try {
+    const { artisanId } = req.params;
+    const { isVerified } = req.body;
+
+    // Check whether the artisan ID is valid
+    if (!mongoose.isValidObjectId(artisanId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid artisan ID",
+      });
+    }
+
+    // The admin must provide a boolean value
+    if (typeof isVerified !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isVerified must be true or false",
+      });
+    }
+
+    // Find the artisan profile
+    const artisan = await ArtisanProfile.findById(artisanId);
+
+    if (!artisan) {
+      return res.status(404).json({
+        success: false,
+        message: "Artisan not found",
+      });
+    }
+
+    // Update the verification status
+    artisan.isVerified = isVerified;
+    await artisan.save();
+
+    return res.status(200).json({
+      success: true,
+      message: isVerified
+        ? "Artisan verified successfully"
+        : "Artisan verification revoked successfully",
+      artisan,
+    });
+  } catch (error) {
+    console.error("Update artisan verification error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
 
 module.exports = {
   createArtisanProfile,
@@ -200,4 +292,6 @@ module.exports = {
   updateArtisanProfile,
   getAllArtisans,
   getArtisanById,
+  updateArtisanVerification,
+  verifyArtisan
 };
