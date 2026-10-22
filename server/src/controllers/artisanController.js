@@ -1,5 +1,8 @@
 const mongoose = require("mongoose");
 const ArtisanProfile = require("../models/artisanProfile");
+const {
+  createAdminActivityLog,
+} = require("./adminActivityLogController");
 // Create artisan profile
 const createArtisanProfile = async (req, res) => {
   try {
@@ -194,6 +197,7 @@ const getArtisanById = async (req, res) => {
 };
 
 // Admin verifies an artisan profile
+
 const verifyArtisan = async (req, res) => {
   try {
     const { artisanId } = req.params;
@@ -217,7 +221,25 @@ const verifyArtisan = async (req, res) => {
     artisan.isVerified = true;
     await artisan.save();
 
-    res.status(200).json({
+    // Record the admin activity
+    try {
+      await createAdminActivityLog({
+        adminId: req.user.userId,
+        action: "artisan_verified",
+        targetType: "ArtisanProfile",
+        targetId: artisan._id.toString(),
+        details: {
+          isVerified: artisan.isVerified,
+        },
+      });
+    } catch (logError) {
+      console.error(
+        "Failed to record admin activity:",
+        logError
+      );
+    }
+
+    return res.status(200).json({
       success: true,
       message: "Artisan verified successfully",
       artisan,
@@ -225,12 +247,13 @@ const verifyArtisan = async (req, res) => {
   } catch (error) {
     console.error("Verify artisan error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Server error",
     });
   }
 };
+
 
 const updateArtisanVerification = async (req, res) => {
   try {

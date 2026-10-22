@@ -5,18 +5,28 @@
         updateUserStatus,
         getAdminStats,
         updateServiceStatusAdmin,
+        getAllCustomRequestsAdmin,
+        getAllQuotationsAdmin,
+        getAdminOrderStats
     } = require("../controllers/adminController");
 
     const { getAllOrdersAdmin } = require("../controllers/orderController");
     
-    const { getAllPaymentsAdmin } =
-  require("../controllers/paymentController");
+    const {
+  getAllPaymentsAdmin,
+  reviewPayment,
+} = require("../controllers/paymentController");
+
   const {
   getAllServicesAdmin,
 } = require("../controllers/adminController");
 
     const { protect } = require("../middleware/authMiddleware");
     const { authorizeRoles } = require("../middleware/roleMiddleware");
+
+    const {
+  getAdminActivityLogs,
+} = require("../controllers/adminActivityLogController");
 
     router.get("/users", protect, authorizeRoles("admin"), getAllUsers);
 
@@ -50,6 +60,13 @@ router.get(
   getAllPaymentsAdmin
 );
 
+router.patch(
+  "/payments/:paymentId/review",
+  protect,
+  authorizeRoles("admin"),
+  reviewPayment
+);
+
 router.get(
   "/services",
   protect,
@@ -64,10 +81,33 @@ router.patch(
   updateServiceStatusAdmin
 );
 
-router.patch("/test-route", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Admin PATCH route is working!"
-  });
-});
+
+router.get(
+  "/custom-requests",
+  protect,
+  authorizeRoles("admin"),
+  getAllCustomRequestsAdmin
+);
+
+router.get(
+  "/quotations",
+  protect,
+  authorizeRoles("admin"),
+  getAllQuotationsAdmin
+);
+
+router.get(
+  "/order-stats",
+  protect,
+  authorizeRoles("admin"),
+  getAdminOrderStats
+);
+
+router.get(
+  "/activity-logs",
+  protect,
+  authorizeRoles("admin"),
+  getAdminActivityLogs
+);
+
     module.exports = router;

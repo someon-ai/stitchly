@@ -4,6 +4,11 @@ const ArtisanProfile = require("../models/artisanProfile");
 const Order = require("../models/order");
 const Payment = require("../models/payment");
 const ArtisanService = require("../models/artisanService");
+const CustomRequest = require("../models/customRequest");
+const Quotation = require("../models/quotation");
+const {
+  createAdminActivityLog,
+} = require("./adminActivityLogController");
 
 // Get all registered users (admin only)
 const getAllUsers = async (req, res) => {
@@ -58,6 +63,21 @@ const updateUserStatus = async (req, res) => {
     user.isActive = isActive;
     await user.save();
 
+    try {
+  await createAdminActivityLog({
+    adminId: req.user.userId,
+    action: isActive ? "user_activated" : "user_deactivated",
+    targetType: "User",
+    targetId: user._id.toString(),
+    details: {
+      role: user.role,
+      isActive: user.isActive,
+    },
+  });
+} catch (logError) {
+  console.error("Failed to record admin activity:", logError);
+}
+
     return res.status(200).json({
       success: true,
       message: isActive
@@ -82,6 +102,7 @@ const updateUserStatus = async (req, res) => {
 };
 
 
+
 const getAdminStats = async (req, res) => {
   try {
     const [
@@ -91,6 +112,8 @@ const getAdminStats = async (req, res) => {
       verifiedArtisans,
       totalOrders,
       totalPayments,
+      totalCustomRequests,
+      totalQuotations,
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ isActive: { $ne: false } }),
@@ -98,6 +121,8 @@ const getAdminStats = async (req, res) => {
       ArtisanProfile.countDocuments({ isVerified: true }),
       Order.countDocuments(),
       Payment.countDocuments(),
+      CustomRequest.countDocuments(),
+      Quotation.countDocuments(),
     ]);
 
     return res.status(200).json({
@@ -109,6 +134,8 @@ const getAdminStats = async (req, res) => {
         verifiedArtisans,
         totalOrders,
         totalPayments,
+        totalCustomRequests,
+        totalQuotations,
       },
     });
   } catch (error) {
@@ -120,6 +147,7 @@ const getAdminStats = async (req, res) => {
     });
   }
 };
+
 
 const getAllServicesAdmin = async (req, res) => {
   try {
@@ -167,6 +195,20 @@ const updateServiceStatusAdmin = async (req, res) => {
     service.isActive = isActive;
     await service.save();
 
+    try {
+  await createAdminActivityLog({
+    adminId: req.user.userId,
+    action: isActive ? "service_activated" : "service_deactivated",
+    targetType: "ArtisanService",
+    targetId: service._id.toString(),
+    details: {
+      isActive: service.isActive,
+    },
+  });
+} catch (logError) {
+  console.error("Failed to record admin activity:", logError);
+}
+
     return res.status(200).json({
       success: true,
       message: isActive
@@ -184,10 +226,84 @@ const updateServiceStatusAdmin = async (req, res) => {
   }
 };
 
+const getAllCustomRequestsAdmin = async (req, res) => {
+  try {
+    const requests = await CustomRequest.find()
+      .populate("customer", "name email")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: requests.length,
+      requests,
+    });
+  } catch (error) {
+    console.error("Admin get all custom requests error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching custom requests.",
+    });
+  }
+};
+
+const getAllQuotationsAdmin = async (req, res) => {
+  try {
+    const quotations = await Quotation.find()
+      .populate("customRequest")
+      .populate("artisan")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: quotations.length,
+      quotations,
+    });
+  } catch (error) {
+    console.error("Admin get all quotations error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching quotations.",
+    });
+  }
+};
+
+const getAdminOrderStats = async (req, res) => {
+  try {
+    const orderStats = await Order.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      orderStats,
+    });
+  } catch (error) {
+    console.error("Admin order stats error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching order statistics.",
+    });
+  }
+};
+
 module.exports = {
   getAllUsers,
   updateUserStatus,
   getAdminStats,
   getAllServicesAdmin,
   updateServiceStatusAdmin,
+  getAllCustomRequestsAdmin,
+  getAllQuotationsAdmin,
+  getAdminOrderStats,
 };

@@ -1,6 +1,9 @@
 const Payment = require("../models/payment");
 const Order = require("../models/order");
 const mongoose = require("mongoose");
+const {
+  createAdminActivityLog,
+} = require("./adminActivityLogController");
 
 const submitPayment = async (req, res) => {
   try {
@@ -27,7 +30,9 @@ const submitPayment = async (req, res) => {
       });
     }
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).select("+customer");
+
+   
 
     if (!order) {
       return res.status(404).json({
@@ -36,12 +41,14 @@ const submitPayment = async (req, res) => {
       });
     }
 
-    if (order.customer.toString() !== req.user.userId) {
-      return res.status(403).json({
-        success: false,
-        message: "You cannot submit payment for another customer's order.",
-      });
-    }
+    
+if (order.customer.toString() !== req.user.userId.toString()) {
+  return res.status(403).json({
+    success: false,
+    message: "You cannot submit payment for another customer's order.",
+  });
+}
+
 
     if (order.status === "cancelled") {
       return res.status(400).json({
@@ -193,6 +200,22 @@ const reviewPayment = async (req, res) => {
       status === "rejected" ? rejectionReason.trim() : "";
 
     await payment.save();
+
+    try {
+  await createAdminActivityLog({
+    adminId: req.user.userId,
+    action: "payment_reviewed",
+    targetType: "Payment",
+    targetId: payment._id.toString(),
+    details: {
+      status: payment.status,
+      amount: payment.amount,
+      method: payment.method,
+    },
+  });
+} catch (logError) {
+  console.error("Failed to record admin activity:", logError);
+}
 
     return res.status(200).json({
       success: true,
